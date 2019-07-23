@@ -10,5 +10,5 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::patch('country', ['uses' => 'CountryController@update', 'as'=>'country.update']);
+Route::put('/country', ['uses' => 'CountryController@update', 'as'=>'country.update']);
 Route::get('/countries', ['uses' => 'CountryController@index', 'as'=>'countries']);
