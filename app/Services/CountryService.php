@@ -34,9 +34,8 @@ class CountryService
             Queue::push($cacheService);
         // Иначе делаем запись в оба кэша в риалтайме (истекло время ожидания запасного кэша, чего быть не должно при правильной настройке)
         } else {
-            $cacheService->handle();
+            $stats = $cacheService->handle();
         }
-
         return $stats;
     }
 

@@ -33,7 +33,7 @@ class CacheCountries implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @return void
+     * @return array
      */
     public function handle()
     {
@@ -49,5 +49,7 @@ class CacheCountries implements ShouldQueue
         Cache::put(self::STATS_PRIMARY_KEY, $countries, getenv('CACHE_LIFE_TIME_PRIMARY'));
         // Дублируем данные в более долгоживущий кэш (можно бессмертный)
         Cache::put(self::STATS_SECONDARY_KEY, $countries, getenv('CACHE_LIFE_TIME_SECONDARY'));
+
+        return $countries;
     }
 }
