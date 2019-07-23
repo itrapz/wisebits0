@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Services\CountryService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -14,11 +15,6 @@ use Illuminate\Support\Facades\Redis;
 class CacheCountries implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    const STATS_PRIMARY_KEY   = 'stats.countries.primary';
-    const STATS_SECONDARY_KEY = 'stats.countries.secondary';
-    const PARENT_KEY          = 'countries:';
-    const KEY_MASK            = self::PARENT_KEY . '%s';
 
     /**
      * Create a new job instance.
@@ -38,17 +34,17 @@ class CacheCountries implements ShouldQueue
     public function handle()
     {
         // Собираем по ключам из хранилища
-        $keys      = Redis::keys(self::PARENT_KEY . '*');
+        $keys      = Redis::keys(CountryService::PARENT_KEY . '*');
         $countries = [];
         foreach ($keys as $key) {
             $value                 = Redis::get($key);
-            $outputKey             = str_replace(self::PARENT_KEY, '', $key);
+            $outputKey             = str_replace(CountryService::PARENT_KEY, '', $key);
             $countries[$outputKey] = $value;
         }
         // Кладем в кэш, время жизни выставляется в общем конфиге (тип хранилища тоже можно выбрать в конфиге (Memcached, Redis, File))
-        Cache::put(self::STATS_PRIMARY_KEY, $countries, getenv('CACHE_LIFE_TIME_PRIMARY'));
+        Cache::put(CountryService::STATS_PRIMARY_KEY, $countries, getenv('CACHE_LIFE_TIME_PRIMARY'));
         // Дублируем данные в более долгоживущий кэш (можно бессмертный)
-        Cache::put(self::STATS_SECONDARY_KEY, $countries, getenv('CACHE_LIFE_TIME_SECONDARY'));
+        Cache::put(CountryService::STATS_SECONDARY_KEY, $countries, getenv('CACHE_LIFE_TIME_SECONDARY'));
 
         return $countries;
     }
