@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Redis;
 
 class CountryService
 {
-    const STATS_KEY  = 'countries.stats';
+    const STATS_KEY  = 'stats.countries';
     const PARENT_KEY = 'countries:';
     const KEY_MASK   = self::PARENT_KEY . '%s';
 
