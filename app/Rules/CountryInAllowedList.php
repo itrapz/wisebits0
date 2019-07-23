@@ -2,11 +2,11 @@
 
 namespace App\Rules;
 
-use App\Model\Country;
 use Illuminate\Contracts\Validation\Rule;
 
 class CountryInAllowedList implements Rule
 {
+    const ALLOWED_COUNTRIES = ['cy', 'fr', 'ge', 'ru', 'uk', 'us'];
     /**
      * Create a new rule instance.
      *
@@ -26,7 +26,7 @@ class CountryInAllowedList implements Rule
      */
     public function passes($attribute, $value)
     {
-        return in_array($value, Country::ALLOWED_COUNTRIES);
+        return in_array($value, self::ALLOWED_COUNTRIES);
     }
 
     /**

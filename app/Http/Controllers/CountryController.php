@@ -26,11 +26,11 @@ class CountryController extends Controller
      */
     public function index()
     {
-        // Если есть в кэше забираем стату оттуда, региулируем время жизни с помощью TTL в конфиге (как бы слейв)
+        // Если есть в кэше - забираем стату оттуда, региулируем время жизни с помощью TTL в конфиге (как бы слейв)
         if ($stats = Cache::get(self::STATS_KEY)) {
             return response()->json($stats, 200);
         }
-        // Если есть в кэше нет собираем по ключам их хранилища
+        // Если в кэше нет - собираем по ключам их хранилища
         $keys      = Redis::keys(self::PARENT_KEY . '*');
         $countries = [];
         foreach ($keys as $key) {
@@ -38,7 +38,7 @@ class CountryController extends Controller
             $outputKey             = str_replace(self::PARENT_KEY, '', $key);
             $countries[$outputKey] = $value;
         }
-        // Кладем в кэш время жизни выставляется в общем конфиге
+        // Кладем в кэш, время жизни выставляется в общем конфиге (тип хранилища тоже можно выбрать в конфиге (Memcached, Redis, File))
         Cache::put(self::STATS_KEY, $countries, getenv('CACHE_LIFE_TIME'));
 
         return response()->json($countries, 200);
@@ -52,12 +52,13 @@ class CountryController extends Controller
      */
     public function update(CountryRequest $request)
     {
+        // Базовая валидация по длине и наличию
         $data = $request->validated();
-        // Custom Validations
+        // Кастомная валидация, сверяем входит ли страна в список допустимых
         $this->validate($request, ['country' => new CountryInAllowedList()]);
 
         $key = sprintf(self::KEY_MASK, $data['country']);
-
+        // Инкрементируем запись по прошедшему валидацию ключу
         return response()->json(['success' => (bool) Redis::incr($key)], 200);
     }
 }
