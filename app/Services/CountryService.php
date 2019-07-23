@@ -20,7 +20,7 @@ class CountryService
         if ($stats = Cache::get(self::STATS_KEY)) {
             return $stats;
         }
-        // Если в кэше нет - собираем по ключам их хранилища
+        // Если в кэше нет - собираем по ключам из хранилища
         $keys      = Redis::keys(self::PARENT_KEY . '*');
         $countries = [];
         foreach ($keys as $key) {
