@@ -3,45 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CountryRequest;
+use App\Services\CountryService;
 use App\Rules\CountryInAllowedList;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Cache;
 
 class CountryController extends Controller
 {
-    const PARENT_KEY = 'countries:';
-    const KEY_MASK   = self::PARENT_KEY . '%s';
-    const STATS_KEY  = 'countries:';
+    /** @var \App\Services\CountryService */
+    public $service;
 
-    protected $storage;
-
-    public function __construct(Redis $storage)
+    public function __construct(CountryService $service)
     {
-        $this->storage = $storage;
+        $this->service = $service;
     }
 
     /**
      * Display a listing of the resource.
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        // Если есть в кэше - забираем стату оттуда, региулируем время жизни с помощью TTL в конфиге (как бы слейв)
-        if ($stats = Cache::get(self::STATS_KEY)) {
-            return response()->json($stats, 200);
-        }
-        // Если в кэше нет - собираем по ключам их хранилища
-        $keys      = Redis::keys(self::PARENT_KEY . '*');
-        $countries = [];
-        foreach ($keys as $key) {
-            $value                 = Redis::get($key);
-            $outputKey             = str_replace(self::PARENT_KEY, '', $key);
-            $countries[$outputKey] = $value;
-        }
-        // Кладем в кэш, время жизни выставляется в общем конфиге (тип хранилища тоже можно выбрать в конфиге (Memcached, Redis, File))
-        Cache::put(self::STATS_KEY, $countries, getenv('CACHE_LIFE_TIME'));
-
-        return response()->json($countries, 200);
+        $list = $this->service->list();
+        return response()->json($list, 200);
     }
 
     /**
@@ -57,8 +39,9 @@ class CountryController extends Controller
         // Кастомная валидация, сверяем входит ли страна в список допустимых
         $this->validate($request, ['country' => new CountryInAllowedList()]);
 
-        $key = sprintf(self::KEY_MASK, $data['country']);
-        // Инкрементируем запись по прошедшему валидацию ключу
-        return response()->json(['success' => (bool) Redis::incr($key)], 200);
+        // Обновляем (инкрементим) запись по прошедшему валидацию ключу
+        $success = $this->service->update($data);
+
+        return response()->json(['success' => $success], 200);
     }
 }
