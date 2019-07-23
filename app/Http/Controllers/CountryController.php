@@ -11,6 +11,7 @@ class CountryController extends Controller
 {
     const PARENT_KEY = 'countries:';
     const KEY_MASK   = self::PARENT_KEY . '%s';
+    const STATS_KEY  = 'countries:';
 
     protected $storage;
 
@@ -26,7 +27,7 @@ class CountryController extends Controller
     public function index()
     {
         // Если есть в кэше забираем стату оттуда, региулируем время жизни с помощью TTL в конфиге (как бы слейв)
-        if ($stats = Cache::get('companies.stats')) {
+        if ($stats = Cache::get(self::STATS_KEY)) {
             return response()->json($stats, 200);
         }
         // Если есть в кэше нет собираем по ключам их хранилища
@@ -38,7 +39,7 @@ class CountryController extends Controller
             $countries[$outputKey] = $value;
         }
         // Кладем в кэш время жизни выставляется в общем конфиге
-        Cache::put('companies.stats', $countries, getenv('CACHE_LIFE_TIME'));
+        Cache::put(self::STATS_KEY, $countries, getenv('CACHE_LIFE_TIME'));
 
         return response()->json($countries, 200);
     }
